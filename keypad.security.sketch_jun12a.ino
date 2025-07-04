@@ -27,11 +27,15 @@ const int lockedPos=0;
 const int unlockedPos=90;
 //Passcode 
 const char masterCode[]="1234";
+const char lockCode[] = "0000";
 const byte codeLength=4; //Length of Passcode
 //Variables
 char enteredCode[codeLength +1]; //+1 for null terminator
 byte currentCodeIndex=0;
 
+bool unlocked = false;            //Tracks if the door is currently unlocked
+unsigned long unlockTimestamp = 0; //Stores the millis() time when the door was unlocked
+const unsigned long autoLockDelay = 5000; //5 seconds (5000 milliseconds) for auto-lock
 void setup(){
     Serial.begin(9600);
     Serial.println("Servo Door Lock Ready");
@@ -77,8 +81,14 @@ void loop(){
             buzzWrongCode();
         }
     }
+    // 5-second Auto-Lock Logic 
+    if (unlocked && (millis() - unlockTimestamp >= autoLockDelay)) {
+        Serial.println("Auto-locking door after 5 seconds");
+        lockDoor();
+        resetCodeInput(); // Clear input after auto-lock
+    }
 }
-//Door Loc Logics
+//Door Lock Logics
 void checkCode() {
     if (strcmp(enteredCode,masterCode)==0){
         Serial.println("Access Granted");
